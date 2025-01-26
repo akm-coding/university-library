@@ -6,6 +6,7 @@ import {
   DefaultValues,
   FieldValues,
   Path,
+  SubmitHandler,
   useForm,
   UseFormReturn,
 } from "react-hook-form";
@@ -24,6 +25,7 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import FileUpload from "./FileUpload";
+import { toast } from "@/hooks/use-toast";
 
 interface Props<T extends FieldValues> {
   schema: ZodType<T>;
@@ -46,6 +48,28 @@ const AuthForm = <T extends FieldValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues as DefaultValues<T>,
   });
+
+  const handleSubmit: SubmitHandler<T> = async (data) => {
+    const result = await onSubmit(data);
+
+    if (result.success) {
+      toast({
+        title: "Success",
+        description: isSignIn
+          ? "You have successfully signed in."
+          : "You have successfully signed up.",
+      });
+
+      router.push("/");
+    } else {
+      toast({
+        title: `Error ${isSignIn ? "signing in" : "signing up"}`,
+        description: result.error ?? "An error occurred.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold text-white">
@@ -58,7 +82,7 @@ const AuthForm = <T extends FieldValues>({
       </p>
       <Form {...form}>
         <form
-          // onSubmit={form.handleSubmit(handleSubmit)}
+          onSubmit={form.handleSubmit(handleSubmit)}
           className="w-full space-y-6"
         >
           {Object.keys(defaultValues).map((field) => (
